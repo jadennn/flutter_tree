@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tree/bean/node.dart';
 import 'package:flutter_tree/bean/organ.dart';
 import 'package:flutter_tree/widget/ImageText.dart';
+import 'package:flutter_tree/widget/SearchBar.dart';
 
 class Tree extends StatefulWidget {
   final List<Organ> organs;
@@ -23,6 +24,9 @@ class TreeState extends State<Tree> {
   List<int> mark = new List();
   ///第一个节点的index
   int nodeId = 1;
+  ///展示搜索结构
+  bool showSearch = false;
+  List<Node> keep;
 
   @override
   void initState() {
@@ -34,12 +38,34 @@ class TreeState extends State<Tree> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return SafeArea(child: Scaffold(
       backgroundColor: Colors.white,
-      body: ListView(
-        children: _buildNode(expand),
+      body: Column(
+        children: <Widget>[
+          SearchBar(list, _onSearch),
+          Expanded(child: ListView(
+            children: _buildNode(expand),
+          ),),
+        ],
       ),
-    );
+
+    ));
+  }
+
+  ///搜索结果
+  void _onSearch(List<Node> result){
+    setState(() {
+      if(result == null){ //如果为空，代表搜索关键字为空
+        showSearch = false;
+        expand = keep; //将之前保存的状态还原
+      }else{
+        if(!showSearch){ //如果之前展示的不是搜索的结果，保存状态，为了之后状态还原做准备
+          keep = expand;
+        }
+        showSearch = true; //展示搜索结果
+        expand = result;
+      }
+    });
   }
 
   ///如果解析的数据是一个list列表，采用这个方法
@@ -148,7 +174,7 @@ class TreeState extends State<Tree> {
                 ? node.expand ? "images/expand.png" : "images/collect.png"
                 : "images/member.png",
             node.type == Node.typeOrgan ? (node.object as Organ).name : (node.object as Member).name,
-            padding: node.depth * 20.0,
+            padding: showSearch ? 0 : node.depth * 20.0, //如果展示搜索结果，那么不缩进
           ),
           onTap: (){
             if(node.type == Node.typeOrgan){
